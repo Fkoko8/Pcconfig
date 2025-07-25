@@ -4,7 +4,6 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  // 👇 base dynamicznie zależnie od trybu
   base: mode === 'production' ? '/Pcconfig/' : '/',
   server: {
     host: "::",
