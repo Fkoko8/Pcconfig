@@ -1,21 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
-  DollarSign, 
-  Target, 
-  Monitor, 
-  Settings,
-  User,
-  Mail,
   CheckCircle,
-  Gamepad2,
+  DollarSign,
   Cpu,
-  HardDrive
+  Monitor,
+  Zap,
+  Clock,
+  ArrowLeft,
+  Send,
+  Star,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PCBuildFormData } from '../types';
@@ -25,272 +23,336 @@ interface Step5Props {
   onUpdate: (data: Partial<PCBuildFormData>) => void;
   onSubmit: () => void;
   onPrev: () => void;
-  isSubmitting?: boolean;
+  isSubmitting: boolean;
   className?: string;
 }
-
-const experienceLevels = [
-  { value: 'beginner', label: 'Beginner', description: 'First time building a PC' },
-  { value: 'intermediate', label: 'Intermediate', description: 'Built 1-2 PCs before' },
-  { value: 'advanced', label: 'Advanced', description: 'Experienced PC builder' },
-  { value: 'expert', label: 'Expert', description: 'Professional/enthusiast level' }
-];
 
 export const Step5Summary: React.FC<Step5Props> = ({
   data,
   onUpdate,
   onSubmit,
   onPrev,
-  isSubmitting = false,
+  isSubmitting,
   className
 }) => {
-  const [email, setEmail] = useState(data.email || '');
-  const [experienceLevel, setExperienceLevel] = useState(data.experienceLevel || '');
+  const budgetRange = data.budget ? `$${data.budget.min} - $${data.budget.max}` : 'Not specified';
+  const primaryUses = data.primaryUse || [];
+  const selectedPeripherals = data.peripheralNeeds ? 
+    Object.entries(data.peripheralNeeds)
+      .filter(([_, selected]) => selected)
+      .map(([name]) => name) : [];
 
-  const handleSubmit = () => {
-    onUpdate({
-      ...data,
-      email: email.trim(),
-      experienceLevel
-    });
-    onSubmit();
+  const getUseCaseLabel = (useCase: string) => {
+    const labels: Record<string, string> = {
+      'gaming': 'Gaming',
+      'content-creation': 'Content Creation',
+      'programming': 'Programming',
+      'ai-ml': 'AI/Machine Learning',
+      'office-work': 'Office & Productivity',
+      'design': '3D Design & CAD',
+      'streaming': 'Live Streaming',
+      'workstation': 'Professional Workstation'
+    };
+    return labels[useCase] || useCase;
   };
 
-  const formatBudget = (budget: { min: number; max: number } | undefined) => {
-    if (!budget) return 'Not specified';
-    return `$${budget.min.toLocaleString()} - $${budget.max.toLocaleString()}`;
+  const getPeripheralLabel = (peripheral: string) => {
+    const labels: Record<string, string> = {
+      'monitor': 'Monitor',
+      'keyboard': 'Keyboard',
+      'mouse': 'Gaming Mouse',
+      'headset': 'Headset',
+      'speakers': 'Speakers',
+      'webcam': 'Webcam',
+      'vr': 'VR Headset'
+    };
+    return labels[peripheral] || peripheral;
   };
 
-  const formatUseCase = (useCase: string) => {
-    return useCase.split('-').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
-  const canSubmit = experienceLevel && email.includes('@');
+  const summaryItems = [
+    {
+      icon: DollarSign,
+      title: 'Budget Range',
+      value: budgetRange,
+      color: 'text-green-400'
+    },
+    {
+      icon: Cpu,
+      title: 'Primary Uses',
+      value: primaryUses.length > 0 ? `${primaryUses.length} selected` : 'None specified',
+      color: 'text-blue-400'
+    },
+    {
+      icon: Monitor,
+      title: 'Peripherals',
+      value: selectedPeripherals.length > 0 ? `${selectedPeripherals.length} items` : 'None needed',
+      color: 'text-purple-400'
+    },
+    {
+      icon: Zap,
+      title: 'Form Factor',
+      value: data.formFactor ? data.formFactor.replace('-', ' ').toUpperCase() : 'Not specified',
+      color: 'text-orange-400'
+    }
+  ];
 
   return (
     <div className={cn("space-y-8", className)}>
-      {/* Build Summary */}
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <Badge variant="secondary" className="text-sm">
+          Final Step
+        </Badge>
+        <div>
+          <h2 className="text-3xl font-bold">Review Your Requirements</h2>
+          <p className="text-muted-foreground mt-2">
+            Confirm your build requirements before we generate your personalized PC recommendations.
+          </p>
+        </div>
+      </div>
+
+      {/* Summary Overview */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryItems.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <Card key={index} className="glass-card">
+              <CardContent className="p-6 text-center">
+                <Icon className={cn("w-8 h-8 mx-auto mb-3", item.color)} />
+                <div className="font-semibold text-sm text-muted-foreground mb-1">
+                  {item.title}
+                </div>
+                <div className="font-bold">{item.value}</div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Detailed Summary */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="w-6 h-6 text-primary" />
-            Build Summary
+            Build Requirements Summary
           </CardTitle>
           <CardDescription>
-            Review your requirements before we generate your personalized PC build recommendations.
+            Review all your specifications before submitting
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Budget */}
-          <div className="flex items-start gap-3">
-            <DollarSign className="w-5 h-5 text-accent mt-0.5" />
-            <div>
-              <div className="font-semibold">Budget Range</div>
-              <div className="text-lg text-primary font-bold">{formatBudget(data.budget)}</div>
+          <div>
+            <div className="font-semibold flex items-center gap-2 mb-2">
+              <DollarSign className="w-4 h-4 text-green-400" />
+              Budget Range
             </div>
+            <div className="text-muted-foreground">{budgetRange}</div>
           </div>
 
           <Separator />
 
           {/* Primary Use Cases */}
-          <div className="flex items-start gap-3">
-            <Target className="w-5 h-5 text-accent mt-0.5" />
-            <div className="space-y-2">
-              <div className="font-semibold">Primary Use Cases</div>
-              <div className="flex flex-wrap gap-2">
-                {data.primaryUse?.map(useCase => (
-                  <Badge key={useCase} variant="secondary">
-                    {formatUseCase(useCase)}
-                  </Badge>
-                )) || <span className="text-muted-foreground">None selected</span>}
-              </div>
+          <div>
+            <div className="font-semibold flex items-center gap-2 mb-3">
+              <Cpu className="w-4 h-4 text-blue-400" />
+              Primary Use Cases
             </div>
+            {primaryUses.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {primaryUses.map((useCase) => (
+                  <Badge key={useCase} variant="secondary">
+                    {getUseCaseLabel(useCase)}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <div className="text-muted-foreground">None specified</div>
+            )}
           </div>
 
-          <Separator />
-
-          {/* Gaming Performance */}
+          {/* Gaming Performance (if applicable) */}
           {data.gamingPerformance && (
             <>
-              <div className="flex items-start gap-3">
-                <Gamepad2 className="w-5 h-5 text-accent mt-0.5" />
-                <div className="space-y-2">
-                  <div className="font-semibold">Gaming Requirements</div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Target FPS:</span>
-                      <span className="ml-2 font-medium">{data.gamingPerformance.targetFPS}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Resolution:</span>
-                      <span className="ml-2 font-medium">{data.gamingPerformance.resolution}</span>
-                    </div>
+              <Separator />
+              <div>
+                <div className="font-semibold flex items-center gap-2 mb-3">
+                  <Monitor className="w-4 h-4 text-purple-400" />
+                  Gaming Performance
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Target FPS:</span>
+                    <span>{data.gamingPerformance.targetFPS} FPS</span>
                   </div>
-                  {data.gamingPerformance.games && data.gamingPerformance.games.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {data.gamingPerformance.games.slice(0, 5).map(game => (
-                        <Badge key={game} variant="outline" className="text-xs">
-                          {game}
-                        </Badge>
-                      ))}
-                      {data.gamingPerformance.games.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{data.gamingPerformance.games.length - 5} more
-                        </Badge>
-                      )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Resolution:</span>
+                    <span>{data.gamingPerformance.resolution}</span>
+                  </div>
+                  {data.gamingPerformance.games.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Games:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {data.gamingPerformance.games.slice(0, 3).map((game) => (
+                          <Badge key={game} variant="outline" className="text-xs">
+                            {game}
+                          </Badge>
+                        ))}
+                        {data.gamingPerformance.games.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{data.gamingPerformance.games.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-              <Separator />
             </>
           )}
 
           {/* System Preferences */}
-          <div className="flex items-start gap-3">
-            <Settings className="w-5 h-5 text-accent mt-0.5" />
-            <div className="space-y-2">
-              <div className="font-semibold">System Preferences</div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Form Factor:</span>
-                  <span className="ml-2 font-medium">{data.formFactor || 'Not specified'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Noise Level:</span>
-                  <span className="ml-2 font-medium">{data.noiseLevel || 'Not specified'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">RGB Lighting:</span>
-                  <span className="ml-2 font-medium">{data.rgbLighting || 'Not specified'}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Future Upgrades:</span>
-                  <span className="ml-2 font-medium">{data.upgradePath ? 'Yes' : 'No'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Peripherals */}
-          {data.peripheralNeeds && Object.values(data.peripheralNeeds).some(Boolean) && (
+          {data.formFactor && (
             <>
-              <div className="flex items-start gap-3">
-                <Monitor className="w-5 h-5 text-accent mt-0.5" />
-                <div className="space-y-2">
-                  <div className="font-semibold">Peripheral Needs</div>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(data.peripheralNeeds)
-                      .filter(([_, needed]) => needed)
-                      .map(([peripheral, _]) => (
-                        <Badge key={peripheral} variant="secondary">
-                          {peripheral.charAt(0).toUpperCase() + peripheral.slice(1)}
-                        </Badge>
-                      ))}
+              <Separator />
+              <div>
+                <div className="font-semibold flex items-center gap-2 mb-3">
+                  <Zap className="w-4 h-4 text-orange-400" />
+                  System Preferences
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Form Factor:</span>
+                    <span className="capitalize">{data.formFactor?.replace('-', ' ')}</span>
                   </div>
+                  {data.noiseLevel && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Noise Level:</span>
+                      <span className="capitalize">{data.noiseLevel}</span>
+                    </div>
+                  )}
+                  {data.rgbLighting && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">RGB Lighting:</span>
+                      <span className="capitalize">{data.rgbLighting}</span>
+                    </div>
+                  )}
+                  {data.powerEfficiency && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Power Efficiency:</span>
+                      <span className="capitalize">{data.powerEfficiency}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-              <Separator />
             </>
           )}
 
-          {/* Special Requirements */}
-          {data.specialRequirements && data.specialRequirements.length > 0 && (
-            <div className="flex items-start gap-3">
-              <HardDrive className="w-5 h-5 text-accent mt-0.5" />
-              <div className="space-y-2">
-                <div className="font-semibold">Special Requirements</div>
+          {/* Peripherals */}
+          {selectedPeripherals.length > 0 && (
+            <>
+              <Separator />
+              <div>
+                <div className="font-semibold flex items-center gap-2 mb-3">
+                  <Monitor className="w-4 h-4 text-purple-400" />
+                  Peripheral Recommendations
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {data.specialRequirements.map(req => (
-                    <Badge key={req} variant="outline">
-                      {req}
+                  {selectedPeripherals.map((peripheral) => (
+                    <Badge key={peripheral} variant="secondary">
+                      {getPeripheralLabel(peripheral)}
                     </Badge>
                   ))}
                 </div>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
 
-      {/* Contact Information */}
-      <Card className="glass-card">
+      {/* What Happens Next */}
+      <Card className="glass-card border-primary/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="w-6 h-6 text-primary" />
-            Contact Information
+            <Clock className="w-6 h-6 text-primary" />
+            What Happens Next?
           </CardTitle>
-          <CardDescription>
-            We'll send your personalized build recommendations to your email.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="your.email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
-                required
-              />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground font-bold text-sm">1</span>
+              </div>
+              <div>
+                <div className="font-semibold">Instant Analysis</div>
+                <div className="text-sm text-muted-foreground">
+                  Our AI analyzes your requirements and generates optimized build recommendations
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-accent-foreground font-bold text-sm">2</span>
+              </div>
+              <div>
+                <div className="font-semibold">Detailed Results</div>
+                <div className="text-sm text-muted-foreground">
+                  Get component lists, pricing, compatibility checks, and assembly guides
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">PC Building Experience</label>
-            <Select value={experienceLevel} onValueChange={setExperienceLevel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your experience level" />
-              </SelectTrigger>
-              <SelectContent>
-                {experienceLevels.map((level) => (
-                  <SelectItem key={level.value} value={level.value}>
-                    <div>
-                      <div className="font-medium">{level.label}</div>
-                      <div className="text-xs text-muted-foreground">{level.description}</div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Privacy Notice */}
-      <Card className="glass-card border-accent/50">
-        <CardContent className="p-4">
-          <div className="text-sm text-muted-foreground">
-            <strong>Privacy Notice:</strong> Your information is used solely to generate personalized PC recommendations. 
-            We don't share your data with third parties and you can unsubscribe at any time. 
-            No payment information is collected at this stage.
+          <div className="flex items-center justify-center gap-8 pt-4 text-sm text-muted-foreground border-t border-border">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-accent" />
+              <span>100% Free</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-accent" />
+              <span>Expert Verified</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-accent" />
+              <span>No Registration Required</span>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button onClick={onPrev} variant="outline" size="lg">
+        <Button
+          onClick={onPrev}
+          variant="outline"
+          size="lg"
+          className="min-w-32"
+          disabled={isSubmitting}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </Button>
         
         <Button
-          onClick={handleSubmit}
-          disabled={!canSubmit || isSubmitting}
+          onClick={onSubmit}
           variant="premium"
-          size="xl"
+          size="lg"
           className="min-w-48"
+          disabled={isSubmitting}
         >
-          {isSubmitting ? 'Generating Recommendations...' : 'Get My PC Build 🚀'}
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              Generating Recommendations...
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4 mr-2" />
+              Get My PC Build Recommendations
+            </>
+          )}
         </Button>
       </div>
     </div>

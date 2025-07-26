@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { 
   Monitor, 
   Keyboard, 
   Mouse, 
   Headphones,
-  Volume2,
+  Speaker,
   Camera,
-  Gamepad2,
-  Smartphone
+  Headset,
+  ArrowLeft,
+  ArrowRight,
+  ShoppingCart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PCBuildFormData } from '../types';
@@ -26,68 +29,53 @@ interface Step4Props {
 const peripheralOptions = [
   {
     id: 'monitor',
-    label: 'Monitor',
-    description: 'Display for your new PC',
     icon: Monitor,
-    color: 'from-blue-500 to-cyan-600'
+    title: 'Monitor',
+    description: 'Display for your PC setup',
+    color: 'from-blue-500 to-purple-600'
   },
   {
     id: 'keyboard',
-    label: 'Keyboard',
-    description: 'Mechanical or membrane keyboard',
     icon: Keyboard,
-    color: 'from-purple-500 to-pink-600'
-  },
-  {
-    id: 'mouse',
-    label: 'Gaming Mouse',
-    description: 'High-precision gaming mouse',
-    icon: Mouse,
+    title: 'Keyboard',
+    description: 'Mechanical or membrane keyboard',
     color: 'from-green-500 to-teal-600'
   },
   {
+    id: 'mouse',
+    icon: Mouse,
+    title: 'Gaming Mouse',
+    description: 'High-precision gaming mouse',
+    color: 'from-red-500 to-pink-600'
+  },
+  {
     id: 'headset',
-    label: 'Headset',
-    description: 'Gaming or professional headset',
     icon: Headphones,
-    color: 'from-orange-500 to-red-600'
+    title: 'Headset',
+    description: 'Gaming or professional headset',
+    color: 'from-purple-500 to-indigo-600'
   },
   {
     id: 'speakers',
-    label: 'Speakers',
-    description: 'Desktop speakers or sound system',
-    icon: Volume2,
-    color: 'from-indigo-500 to-purple-600'
+    icon: Speaker,
+    title: 'Speakers',
+    description: 'Desktop or studio speakers',
+    color: 'from-orange-500 to-yellow-600'
   },
   {
     id: 'webcam',
-    label: 'Webcam',
-    description: 'For streaming or video calls',
     icon: Camera,
+    title: 'Webcam',
+    description: 'For streaming or video calls',
     color: 'from-pink-500 to-rose-600'
   },
   {
     id: 'vr',
-    label: 'VR Headset',
-    description: 'Virtual reality gaming setup',
-    icon: Gamepad2,
+    icon: Headset,
+    title: 'VR Headset',
+    description: 'Virtual reality gaming',
     color: 'from-cyan-500 to-blue-600'
   }
-];
-
-const specialRequirementOptions = [
-  'Silent/Quiet Operation',
-  'Small Form Factor (Mini-ITX)',
-  'Multiple Monitor Support (3+)',
-  'VR Ready Build',
-  'Streaming Setup',
-  'Content Creation Focused',
-  'Server/NAS Capabilities',
-  'Portable/LAN Party Build',
-  'Energy Efficient Build',
-  'Future-Proof/Upgradeable',
-  'Budget Constraint Priority',
-  'Specific Color Theme'
 ];
 
 export const Step4Peripherals: React.FC<Step4Props> = ({
@@ -106,48 +94,47 @@ export const Step4Peripherals: React.FC<Step4Props> = ({
     webcam: false,
     vr: false
   });
-  
-  const [specialRequirements, setSpecialRequirements] = useState<string[]>(
-    data.specialRequirements || []
-  );
-  
-  const [additionalNotes, setAdditionalNotes] = useState(data.additionalNotes || '');
 
   useEffect(() => {
     onUpdate({
       ...data,
-      peripheralNeeds,
-      specialRequirements,
-      additionalNotes
+      peripheralNeeds
     });
-  }, [peripheralNeeds, specialRequirements, additionalNotes]);
+  }, [peripheralNeeds]);
 
-  const handlePeripheralToggle = (peripheralId: string) => {
+  const handlePeripheralToggle = (peripheral: keyof typeof peripheralNeeds) => {
     setPeripheralNeeds(prev => ({
       ...prev,
-      [peripheralId]: !prev[peripheralId as keyof typeof prev]
+      [peripheral]: !prev[peripheral]
     }));
   };
 
-  const handleSpecialRequirementToggle = (requirement: string) => {
-    setSpecialRequirements(prev =>
-      prev.includes(requirement)
-        ? prev.filter(r => r !== requirement)
-        : [...prev, requirement]
-    );
-  };
+  const selectedCount = Object.values(peripheralNeeds).filter(Boolean).length;
 
   return (
     <div className={cn("space-y-8", className)}>
-      {/* Peripheral Needs */}
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <Badge variant="secondary" className="text-sm">
+          Step 4 of 5
+        </Badge>
+        <div>
+          <h2 className="text-3xl font-bold">Peripherals & Accessories</h2>
+          <p className="text-muted-foreground mt-2">
+            Do you need any peripherals to complete your setup? We can include recommendations for these items.
+          </p>
+        </div>
+      </div>
+
+      {/* Peripherals Selection */}
       <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Smartphone className="w-6 h-6 text-primary" />
-            Peripherals & Accessories
+            <ShoppingCart className="w-6 h-6 text-primary" />
+            Peripheral Needs
           </CardTitle>
           <CardDescription>
-            Do you need any peripherals included in your budget? Select what you need recommendations for.
+            Select any peripherals you need recommendations for. This is optional - you can skip this step if you already have everything.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,40 +147,39 @@ export const Step4Peripherals: React.FC<Step4Props> = ({
                 <Card
                   key={peripheral.id}
                   className={cn(
-                    "cursor-pointer transition-smooth hover:scale-105 relative overflow-hidden",
+                    "cursor-pointer transition-smooth hover:scale-105 relative overflow-hidden border",
                     isSelected
                       ? "border-primary bg-primary/10 shadow-primary glow-primary"
-                      : "hover:border-accent"
+                      : "border-border hover:border-accent"
                   )}
-                  onClick={() => handlePeripheralToggle(peripheral.id)}
+                  onClick={() => handlePeripheralToggle(peripheral.id as keyof typeof peripheralNeeds)}
                 >
                   <div className={cn(
                     "absolute inset-0 bg-gradient-to-br opacity-10",
                     peripheral.color
                   )} />
                   
-                  <CardContent className="p-4 text-center space-y-2 relative z-10">
+                  <CardContent className="p-6 text-center space-y-4 relative z-10">
                     <div className={cn(
-                      "w-12 h-12 mx-auto rounded-full flex items-center justify-center transition-smooth",
+                      "w-16 h-16 mx-auto rounded-full flex items-center justify-center transition-smooth",
                       isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
                     )}>
-                      <Icon className="w-6 h-6" />
+                      <Icon className="w-8 h-8" />
                     </div>
                     
                     <div>
-                      <div className="font-semibold text-sm">{peripheral.label}</div>
-                      <div className="text-xs text-muted-foreground leading-tight">
+                      <div className="font-semibold text-lg">{peripheral.title}</div>
+                      <div className="text-sm text-muted-foreground">
                         {peripheral.description}
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-center space-x-2 mt-2">
+                    <div className="flex items-center justify-center">
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() => handlePeripheralToggle(peripheral.id)}
-                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => {}}
+                        className="pointer-events-none"
                       />
-                      <span className="text-xs text-muted-foreground">Include in budget</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -203,71 +189,44 @@ export const Step4Peripherals: React.FC<Step4Props> = ({
         </CardContent>
       </Card>
 
-      {/* Special Requirements */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Special Requirements</CardTitle>
-          <CardDescription>
-            Any specific needs or constraints for your build? Select all that apply.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {specialRequirementOptions.map((requirement) => (
-              <div
-                key={requirement}
-                className={cn(
-                  "flex items-center space-x-2 p-3 rounded-lg border cursor-pointer transition-smooth hover:bg-accent/10",
-                  specialRequirements.includes(requirement)
-                    ? "border-primary bg-primary/10"
-                    : "border-border"
-                )}
-                onClick={() => handleSpecialRequirementToggle(requirement)}
-              >
-                <Checkbox
-                  checked={specialRequirements.includes(requirement)}
-                  onCheckedChange={() => handleSpecialRequirementToggle(requirement)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <label className="text-sm font-medium cursor-pointer">
-                  {requirement}
-                </label>
+      {/* Selection Summary */}
+      {selectedCount > 0 && (
+        <Card className="glass-card border-primary/20">
+          <CardContent className="p-6">
+            <div className="text-center space-y-2">
+              <div className="font-semibold text-primary">
+                Selected {selectedCount} peripheral{selectedCount !== 1 ? 's' : ''}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="text-sm text-muted-foreground">
+                We'll include recommendations for these items in your final build summary.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Additional Notes */}
+      {/* Information Card */}
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle>Additional Notes</CardTitle>
-          <CardDescription>
-            Anything else you'd like us to know about your build requirements?
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <textarea
-            className="w-full h-32 p-3 rounded-lg border border-border bg-card text-card-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            placeholder="e.g., Specific games you want to run, workspace constraints, aesthetic preferences, or any other requirements..."
-            value={additionalNotes}
-            onChange={(e) => setAdditionalNotes(e.target.value)}
-            maxLength={1000}
-          />
-          <div className="flex justify-between items-center mt-2">
-            <p className="text-xs text-muted-foreground">
-              Share any specific details that will help us create your perfect build
-            </p>
-            <span className="text-xs text-muted-foreground">
-              {additionalNotes.length}/1000
-            </span>
+        <CardContent className="p-6">
+          <div className="text-center space-y-3">
+            <div className="text-lg font-semibold">💡 Pro Tip</div>
+            <div className="text-sm text-muted-foreground">
+              Peripheral recommendations are optional and won't affect your core PC build. 
+              You can always add peripherals later or skip this step entirely.
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button onClick={onPrev} variant="outline" size="lg">
+        <Button
+          onClick={onPrev}
+          variant="outline"
+          size="lg"
+          className="min-w-32"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </Button>
         
@@ -278,6 +237,7 @@ export const Step4Peripherals: React.FC<Step4Props> = ({
           className="min-w-32"
         >
           Continue
+          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
     </div>

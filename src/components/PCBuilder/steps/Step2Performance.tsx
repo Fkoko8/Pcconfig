@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { 
-  Monitor, 
   Zap, 
-  Target, 
-  Settings,
-  Gamepad2,
-  Video,
-  Cpu,
-  HardDrive
+  Monitor, 
+  Gamepad2, 
+  Video, 
+  Brain,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PCBuildFormData } from '../types';
@@ -27,22 +26,22 @@ interface Step2Props {
 }
 
 const resolutionOptions = [
-  { value: '1080p', label: '1080p (1920×1080)', description: 'Full HD - Great for most gaming' },
-  { value: '1440p', label: '1440p (2560×1440)', description: 'QHD - Perfect balance of quality and performance' },
-  { value: '4k', label: '4K (3840×2160)', description: 'Ultra HD - Maximum visual quality' },
-  { value: 'ultrawide', label: 'Ultrawide (3440×1440)', description: 'Immersive widescreen gaming' },
+  { value: '1080p', label: '1080p (1920x1080)', description: 'Standard HD gaming' },
+  { value: '1440p', label: '1440p (2560x1440)', description: 'High-resolution gaming' },
+  { value: '4k', label: '4K (3840x2160)', description: 'Ultra high-resolution' },
+  { value: 'ultrawide', label: 'Ultrawide (3440x1440)', description: 'Immersive widescreen' }
 ];
 
 const popularGames = [
-  'Cyberpunk 2077', 'Call of Duty: Modern Warfare', 'Fortnite', 'Apex Legends',
-  'Valorant', 'League of Legends', 'Minecraft', 'GTA V', 'Red Dead Redemption 2',
-  'The Witcher 3', 'Elden Ring', 'Counter-Strike 2', 'Overwatch 2', 'FIFA 24'
+  'Cyberpunk 2077', 'Call of Duty', 'Valorant', 'Fortnite', 'Apex Legends',
+  'League of Legends', 'Counter-Strike 2', 'Elden Ring', 'Hogwarts Legacy',
+  'Microsoft Flight Simulator', 'Red Dead Redemption 2', 'GTA V'
 ];
 
-const softwareOptions = [
+const workloadSoftware = [
   'Adobe Premiere Pro', 'Adobe After Effects', 'DaVinci Resolve', 'Blender',
-  'AutoCAD', 'SolidWorks', 'Maya', 'Unity', 'Unreal Engine', 'OBS Studio',
-  'Photoshop', 'Illustrator', 'Visual Studio', 'IntelliJ IDEA', 'Docker'
+  'AutoCAD', 'SolidWorks', 'Maya', 'Cinema 4D', 'Unity', 'Unreal Engine',
+  'OBS Studio', 'Streamlabs', 'Visual Studio', 'PyTorch', 'TensorFlow'
 ];
 
 export const Step2Performance: React.FC<Step2Props> = ({
@@ -52,30 +51,30 @@ export const Step2Performance: React.FC<Step2Props> = ({
   onPrev,
   className
 }) => {
-  const [targetFPS, setTargetFPS] = useState(data.gamingPerformance?.targetFPS || 60);
-  const [resolution, setResolution] = useState(data.gamingPerformance?.resolution || '1440p');
+  const [targetFPS, setTargetFPS] = useState<[number]>([data.gamingPerformance?.targetFPS || 60]);
+  const [resolution, setResolution] = useState(data.gamingPerformance?.resolution || '1080p');
   const [selectedGames, setSelectedGames] = useState<string[]>(data.gamingPerformance?.games || []);
   const [selectedSoftware, setSelectedSoftware] = useState<string[]>(data.workloadRequirements?.software || []);
   const [multitasking, setMultitasking] = useState(data.workloadRequirements?.multitasking || false);
   const [renderingNeeds, setRenderingNeeds] = useState(data.workloadRequirements?.renderingNeeds || false);
 
-  const isGamingSelected = data.primaryUse?.includes('gaming');
-  const isContentCreationSelected = data.primaryUse?.includes('content-creation') || 
-                                   data.primaryUse?.includes('design') || 
-                                   data.primaryUse?.includes('ai-ml');
+  const isGamingUse = data.primaryUse?.includes('gaming');
+  const isContentCreation = data.primaryUse?.includes('content-creation');
+  const isAIML = data.primaryUse?.includes('ai-ml');
+  const isProgramming = data.primaryUse?.includes('programming');
 
   useEffect(() => {
     const updateData: Partial<PCBuildFormData> = { ...data };
     
-    if (isGamingSelected) {
+    if (isGamingUse) {
       updateData.gamingPerformance = {
-        targetFPS,
+        targetFPS: targetFPS[0],
         resolution,
         games: selectedGames
       };
     }
     
-    if (isContentCreationSelected) {
+    if (isContentCreation || isAIML || isProgramming) {
       updateData.workloadRequirements = {
         software: selectedSoftware,
         multitasking,
@@ -102,19 +101,12 @@ export const Step2Performance: React.FC<Step2Props> = ({
     );
   };
 
-  const getFpsRecommendation = (fps: number) => {
-    if (fps >= 144) return { text: 'Competitive Gaming', color: 'text-accent' };
-    if (fps >= 120) return { text: 'High Refresh Gaming', color: 'text-primary' };
-    if (fps >= 60) return { text: 'Smooth Gaming', color: 'text-green-400' };
-    return { text: 'Basic Gaming', color: 'text-yellow-400' };
-  };
-
-  const canProceed = !isGamingSelected || (targetFPS && resolution);
+  const canProceed = isGamingUse ? selectedGames.length > 0 : true;
 
   return (
     <div className={cn("space-y-8", className)}>
-      {/* Gaming Performance Section */}
-      {isGamingSelected && (
+      {/* Gaming Performance Requirements */}
+      {isGamingUse && (
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -129,24 +121,21 @@ export const Step2Performance: React.FC<Step2Props> = ({
             {/* Target FPS */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-accent" />
-                  <label className="font-semibold">Target FPS</label>
+                <div>
+                  <div className="font-semibold">Target Frame Rate</div>
+                  <div className="text-sm text-muted-foreground">Higher FPS provides smoother gameplay</div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-primary">{targetFPS}</div>
-                  <div className={cn("text-sm", getFpsRecommendation(targetFPS).color)}>
-                    {getFpsRecommendation(targetFPS).text}
-                  </div>
-                </div>
+                <Badge variant="secondary" className="text-lg px-4 py-2">
+                  {targetFPS[0]} FPS
+                </Badge>
               </div>
               
               <Slider
-                value={[targetFPS]}
-                onValueChange={(value) => setTargetFPS(value[0])}
+                value={targetFPS}
+                onValueChange={(value) => setTargetFPS(value as [number])}
                 max={240}
                 min={30}
-                step={10}
+                step={15}
                 className="w-full"
               />
               
@@ -160,13 +149,13 @@ export const Step2Performance: React.FC<Step2Props> = ({
 
             {/* Resolution */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Monitor className="w-5 h-5 text-accent" />
-                <label className="font-semibold">Target Resolution</label>
+              <div>
+                <div className="font-semibold">Gaming Resolution</div>
+                <div className="text-sm text-muted-foreground">Higher resolutions require more powerful graphics cards</div>
               </div>
               
               <Select value={resolution} onValueChange={setResolution}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger>
                   <SelectValue placeholder="Select resolution" />
                 </SelectTrigger>
                 <SelectContent>
@@ -182,19 +171,27 @@ export const Step2Performance: React.FC<Step2Props> = ({
               </Select>
             </div>
 
-            {/* Favorite Games */}
-            <div className="space-y-3">
-              <label className="font-semibold">Games you want to play (optional)</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {/* Game Selection */}
+            <div className="space-y-4">
+              <div>
+                <div className="font-semibold">Games You Want to Play</div>
+                <div className="text-sm text-muted-foreground">Select games to optimize performance recommendations</div>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {popularGames.map((game) => (
-                  <Badge
+                  <div
                     key={game}
-                    variant={selectedGames.includes(game) ? "default" : "outline"}
-                    className="cursor-pointer transition-smooth hover:scale-105 justify-center"
                     onClick={() => handleGameToggle(game)}
+                    className={cn(
+                      "p-3 rounded-lg border cursor-pointer transition-smooth hover:scale-105",
+                      selectedGames.includes(game)
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-accent"
+                    )}
                   >
-                    {game}
-                  </Badge>
+                    <div className="text-sm font-medium">{game}</div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -203,59 +200,69 @@ export const Step2Performance: React.FC<Step2Props> = ({
       )}
 
       {/* Workload Requirements */}
-      {isContentCreationSelected && (
+      {(isContentCreation || isAIML || isProgramming) && (
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Settings className="w-6 h-6 text-primary" />
+              <Zap className="w-6 h-6 text-primary" />
               Workload Requirements
             </CardTitle>
             <CardDescription>
-              What software and workflows will you be running?
+              Help us understand your professional workflow needs.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Software Selection */}
-            <div className="space-y-3">
-              <label className="font-semibold">Primary Software</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {softwareOptions.map((software) => (
-                  <Badge
+            <div className="space-y-4">
+              <div>
+                <div className="font-semibold">Software You Use</div>
+                <div className="text-sm text-muted-foreground">Select applications to optimize component recommendations</div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {workloadSoftware.map((software) => (
+                  <div
                     key={software}
-                    variant={selectedSoftware.includes(software) ? "default" : "outline"}
-                    className="cursor-pointer transition-smooth hover:scale-105 justify-center"
                     onClick={() => handleSoftwareToggle(software)}
+                    className={cn(
+                      "p-3 rounded-lg border cursor-pointer transition-smooth hover:scale-105",
+                      selectedSoftware.includes(software)
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:border-accent"
+                    )}
                   >
-                    {software}
-                  </Badge>
+                    <div className="text-sm font-medium">{software}</div>
+                  </div>
                 ))}
               </div>
             </div>
 
-            {/* Workflow Requirements */}
+            {/* Additional Requirements */}
             <div className="space-y-4">
-              <label className="font-semibold">Workflow Requirements</label>
+              <div className="font-semibold">Additional Requirements</div>
               
               <div className="space-y-3">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Checkbox
                     id="multitasking"
                     checked={multitasking}
-                    onCheckedChange={(checked) => setMultitasking(checked === true)}
+                    onCheckedChange={(checked) => setMultitasking(checked as boolean)}
                   />
-                  <label htmlFor="multitasking" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Heavy multitasking (multiple applications running simultaneously)
+                  <label htmlFor="multitasking" className="text-sm cursor-pointer">
+                    <div className="font-medium">Heavy Multitasking</div>
+                    <div className="text-muted-foreground">Multiple applications running simultaneously</div>
                   </label>
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Checkbox
                     id="rendering"
                     checked={renderingNeeds}
-                    onCheckedChange={(checked) => setRenderingNeeds(checked === true)}
+                    onCheckedChange={(checked) => setRenderingNeeds(checked as boolean)}
                   />
-                  <label htmlFor="rendering" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    3D rendering, video encoding, or AI training workloads
+                  <label htmlFor="rendering" className="text-sm cursor-pointer">
+                    <div className="font-medium">3D Rendering & Simulation</div>
+                    <div className="text-muted-foreground">Heavy computational workloads</div>
                   </label>
                 </div>
               </div>
@@ -266,7 +273,13 @@ export const Step2Performance: React.FC<Step2Props> = ({
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button onClick={onPrev} variant="outline" size="lg">
+        <Button
+          onClick={onPrev}
+          variant="outline"
+          size="lg"
+          className="min-w-32"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
           Previous
         </Button>
         
@@ -278,6 +291,7 @@ export const Step2Performance: React.FC<Step2Props> = ({
           className="min-w-32"
         >
           Continue
+          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
     </div>

@@ -15,7 +15,7 @@ export const FormStepIndicator: React.FC<FormStepIndicatorProps> = ({
   return (
     <div className={cn("flex items-center justify-between w-full max-w-4xl mx-auto px-4", className)}>
       {steps.map((step, index) => (
-        <React.Fragment key={step.id}>
+        <div key={step.id} className="flex items-center">
           <div className="flex flex-col items-center space-y-2">
             <div
               className={cn(
@@ -61,7 +61,7 @@ export const FormStepIndicator: React.FC<FormStepIndicatorProps> = ({
               )}
             />
           )}
-        </React.Fragment>
+        </div>
       ))}
     </div>
   );
